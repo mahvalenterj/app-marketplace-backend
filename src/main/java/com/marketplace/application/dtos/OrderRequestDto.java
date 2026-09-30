@@ -1,9 +1,13 @@
 package com.marketplace.application.dtos;
 
+import jakarta.validation.constraints.NotBlank;
+
 import java.util.List;
 
 public class OrderRequestDto {
+    @NotBlank(message = "Order number is required")
     private String orderNumber;
+
     private List<OrderItemRequestDto> items;
 
     public OrderRequestDto() {

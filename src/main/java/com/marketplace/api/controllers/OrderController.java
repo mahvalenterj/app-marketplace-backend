@@ -3,6 +3,7 @@ package com.marketplace.api.controllers;
 import com.marketplace.application.dtos.OrderRequestDto;
 import com.marketplace.application.dtos.OrderResponseDto;
 import com.marketplace.application.usecases.*;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +28,7 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<OrderResponseDto> createOrder(@RequestBody OrderRequestDto request) {
+    public ResponseEntity<OrderResponseDto> createOrder(@Valid @RequestBody OrderRequestDto request) {
         OrderResponseDto response = createOrderUseCase.execute(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

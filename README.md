@@ -1,83 +1,193 @@
-# Marketplace Backend — Sprint 1
+# App Marketplace Backend
 
-Backend de um marketplace estilo Mercado Livre, desenvolvido com **Clean Architecture** e **SOLID**.
+A Spring Boot 3.2 marketplace backend application built with **Clean Architecture** principles, featuring domain-driven design, separation of concerns across four independent layers, and comprehensive test coverage.
 
-## 📋 Visão Geral
-
-API REST que gerencia:
-- **Produtos**: criação, listagem, consulta
-- **Pedidos**: criação, status, itens
-
-**Arquitetura**: Clean Architecture + SOLID
-**Stack**: Java 17, Spring Boot 3.2, PostgreSQL, JPA/Hibernate
-**Testes**: JUnit 5, Mockito (80%+ coverage)
-
-## 🏗️ Arquitetura
+## 🏗️ Project Structure
 
 ```
-src/main/java/com/marketplace/
-├── domain/                 # Lógica de negócio (independente de frameworks)
-│   ├── entities/          # Entidades do domínio
-│   ├── repositories/      # Interfaces de repositório
-│   └── services/          # Casos de uso / serviços de domínio
-├── application/           # Orquestração e DTOs
-│   ├── dtos/             # Data Transfer Objects
-│   └── usecases/         # Aplicação de casos de uso
-├── infrastructure/        # Implementações técnicas
-│   ├── persistence/      # Implementações de repositório (JPA)
-│   ├── config/           # Configurações do Spring
-│   └── exceptions/       # Tratamento de exceções
-└── api/                  # Camada de apresentação
-    └── controllers/      # REST Controllers
+src/
+├── main/java/com/marketplace/
+│   ├── domain/                  # Business logic (framework-independent)
+│   │   ├── entities/           # Product, Order, OrderItem
+│   │   ├── repositories/       # Repository interfaces
+│   │   ├── services/           # Domain services
+│   │   └── exceptions/         # Custom domain exceptions
+│   ├── infrastructure/         # Data access & Spring configuration
+│   │   ├── persistence/
+│   │   │   ├── jpa/           # JPA entities
+│   │   │   └── repositories/  # Repository implementations (adapters)
+│   │   └── config/            # Spring beans configuration
+│   ├── application/           # Use cases & DTOs
+│   │   ├── dtos/             # Request/response data transfer objects
+│   │   └── usecases/         # Business workflows
+│   └── api/                   # REST endpoints
+│       ├── controllers/       # REST controllers
+│       └── exceptions/        # Global exception handling
+└── test/java/com/marketplace/
+    ├── domain/               # Unit tests for domain logic
+    ├── infrastructure/       # Integration tests for persistence
+    └── api/                  # Controller integration tests
 ```
 
-## 🚀 Quick Start
+## 📋 Requirements
 
-### Pré-requisitos
-- Java 17+
-- Maven 3.8+
-- Docker & Docker Compose
+- **Java 17+**
+- **Maven 3.9+**
+- **PostgreSQL 15** (production) or H2 (testing/development)
+- **Docker** (optional, for containerization)
 
-### Local (H2 em memória)
+## 🚀 Getting Started
+
+### Local Development (H2 In-Memory Database)
+
 ```bash
+# Build the project
 mvn clean install
-mvn spring-boot:run
-```
-API disponível em `http://localhost:8080/api`
 
-### Docker Compose (PostgreSQL)
+# Run the application
+mvn spring-boot:run
+
+# Server starts at: http://localhost:8080/api
+```
+
+### Production Setup (PostgreSQL)
+
+Set environment variables:
+```bash
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=marketplace
+DB_USER=postgres
+DB_PASSWORD=yourpassword
+```
+
+Run with production profile:
+```bash
+mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=prod"
+```
+
+### Docker Compose
+
 ```bash
 docker-compose up
 ```
-- API: `http://localhost:8080/api`
-- PostgreSQL: `localhost:5432`
 
-## 📚 Endpoints
+This starts both PostgreSQL and the application with health checks.
 
-### Produtos
-- `GET /api/produtos` — Listar todos
-- `GET /api/produtos/{id}` — Obter por ID
-- `POST /api/produtos` — Criar novo
+## 🧪 Testing
 
-### Pedidos
-- `GET /api/pedidos` — Listar todos
-- `POST /api/pedidos` — Criar novo
-- `GET /api/pedidos/{id}` — Detalhes do pedido
-
-## 🧪 Testes
-
+### Unit Tests (Domain Layer)
 ```bash
-# Rodar todos os testes
-mvn test
-
-# Com relatório de cobertura
-mvn test jacoco:report
+mvn test -Dtest=*ServiceTest,*Test
 ```
 
-## 📝 CI/CD
+### Integration Tests (Repositories & Controllers)
+```bash
+mvn test -Dtest=*IntegrationTest
+```
 
-GitHub Actions workflow em `.github/workflows/` (a implementar)
+### All Tests
+```bash
+mvn test
+```
 
-## 📄 Licença
+Tests use:
+- **JUnit 5** for test framework
+- **Mockito** for mocking dependencies
+- **MockMvc** for testing REST endpoints
+- **H2 in-memory database** with @DataJpaTest and @SpringBootTest
 
-MIT
+## 📚 API Endpoints
+
+### Products
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/produtos` | Create product |
+| GET | `/api/produtos/{id}` | Get product by ID |
+| GET | `/api/produtos` | List all products |
+
+**Create Product Request:**
+```json
+{
+  "name": "Notebook",
+  "description": "High-end notebook",
+  "price": 2500.00,
+  "quantity": 10,
+  "sku": "SKU-001"
+}
+```
+
+### Orders
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/pedidos` | Create order |
+| GET | `/api/pedidos/{id}` | Get order by ID |
+| GET | `/api/pedidos` | List all orders |
+| POST | `/api/pedidos/{id}/confirmar` | Confirm order |
+
+**Create Order Request:**
+```json
+{
+  "orderNumber": "ORD-001",
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 2
+    }
+  ]
+}
+```
+
+## 🛡️ Input Validation
+
+All request DTOs are validated using Jakarta Validation annotations:
+
+**Product Validation:**
+- `name`: Required, non-blank
+- `description`: Required, non-blank
+- `price`: Required, must be > 0
+- `quantity`: Required, non-negative integer
+- `sku`: Required, unique, non-blank
+
+**Order Validation:**
+- `orderNumber`: Required, non-blank
+- `items[].productId`: Required
+- `items[].quantity`: Required, minimum 1
+
+Validation errors return 400 Bad Request with detailed error messages.
+
+## 💼 Architecture Principles
+
+### Clean Architecture Layers
+
+1. **Domain Layer** - Business rules, framework-independent
+2. **Infrastructure Layer** - Data access, Spring integration
+3. **Application Layer** - Use cases, DTOs, coordination
+4. **API Layer** - REST endpoints, exception handling
+
+### Design Patterns Used
+
+- **Repository Pattern** - Abstract data access
+- **Adapter Pattern** - Layer boundary conversion
+- **Use Case Pattern** - Business workflows
+- **DTO Pattern** - Request/response transformation
+- **State Machine** - Order status transitions
+
+## 🔧 Configuration Profiles
+
+- **default** - H2 in-memory (development)
+- **test** - H2 with clean slate per test
+- **prod** - PostgreSQL with environment variables
+
+## 📦 Dependencies
+
+- Spring Boot 3.2, Spring Data JPA
+- PostgreSQL & H2
+- Jakarta Validation
+- JUnit 5 & Mockito
+
+## 📄 License
+
+MIT License
